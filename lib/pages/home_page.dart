@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart'
-import "package:movie_app/services/tmdb_api/api.dart"
+import 'package:flutter/material.dart';
+import "package:movie_app/services/tmdb_api/api.dart";
+import "package:movie_app/database_models/movies.dart";
 
 class Homepage extends StatefulWidget
 {
@@ -11,7 +12,7 @@ class Homepage extends StatefulWidget
 
 class _MyHomePageState extends State<Homepage>
 {
-  late Future<List<Movies>> upcomingMovies;
+  late Future<List<Movie>> upcomingMovies;
 
   @override initState()
   {
