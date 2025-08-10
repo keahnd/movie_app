@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:movie_app/services/tmdb_api/data.dart';
 import 'package:movie_app/database_models/movies.dart';
-import 'package:movie_app/database_models/people.dart';
+import 'package:movie_app/database_models/credits.dart';
 import 'package:movie_app/database_models/utilities.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -23,12 +23,13 @@ class Api
     throw Exception('Failed to get Upcoming Movies');
   }
 
-  Future<List<dynamic>> getCrew(String movieId, CastCrew option) async
+  Future<List<dynamic>> getCrew(int movieId, CastCrew option) async
   {
+    String sMovieId = movieId.toString();
     // only using english as a default param
     // TODO: Allow changing the language param
     final Map<String, String> queryParameters = {'language': 'en-US'};
-    final Uri uri = Uri.https(Endpoints.urlBase, movieId+Endpoints.urlCastCrew,  queryParameters);
+    final Uri uri = Uri.https(Endpoints.urlBase, sMovieId+Endpoints.urlCastCrew,  queryParameters);
     final response = await http.get(uri,
                                     headers: {'Authorization': accessToken});
 

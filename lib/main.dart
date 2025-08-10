@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
+import 'package:movie_app/database_models/movies.dart';
+import 'package:movie_app/database_models/db.dart';
+import 'package:movie_app/database_models/credits.dart';
 
 void main() {
+  // Database<Movie> allMovies;
+  // Database<Movie> upcomingMovies;
+  // Database<Movie> trendingMovies;
+  // Database<Movie> allMovies;
+  // Database<Movie> allMovies;
   runApp(const MyApp());
 }
 

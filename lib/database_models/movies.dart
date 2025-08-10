@@ -1,4 +1,5 @@
-import 'package:movie_app/database_models/people.dart';
+import 'package:movie_app/database_models/credits.dart';
+import 'package:movie_app/database_models/db.dart';
 import 'package:movie_app/services/tmdb_api/api.dart';
 import 'package:movie_app/database_models/utilities.dart';
 import 'package:logging/logging.dart';
@@ -10,47 +11,65 @@ class Movie
   final String synopsis;
   final String posterPath;
   final DateTime releaseDate;
-  final List<ProductionCompany> productionCompanies;
-  final List<Genre> genres;
+  List<ProductionCompany> productionCompanies = [];
+  List<Genre> genres = [];
   final int budget;
-  String tmdbId;
+  int tmdbId;
   Collection? series;
   int? tmdbRating;
   List<Cast> cast = [];
   Crew? director;
   int score = -1;
 
-  Movie({required this.title, required this.backdropPath, required this.synopsis,
-         required this.posterPath, required this. releaseDate, required this.productionCompanies,
-         required this.genres, required this.budget, required this.tmdbId, this.series, this.tmdbRating})
+  Movie({
+    required this.title, 
+    required this.backdropPath, 
+    required this.synopsis,
+    required this.posterPath, 
+    required this.releaseDate, 
+    required List<dynamic> prodCompaniesJson,
+    required List<dynamic> genresJson, 
+    required this.budget, 
+    required this.tmdbId, 
+    required Map<String, dynamic> seriesJson,
+    this.tmdbRating})
   {
+    productionCompanies = getAllProdComp(prodCompaniesJson);
+    genres = getAllGenres(genresJson);
     cast = getCastList(this);
     director = getDirector(this);
+
+    if(seriesJson.isNotEmpty)
+    {
+      series = Collection(backdropPath: seriesJson['backdrop_path'],
+                          id: seriesJson['id'],
+                          posterPath: seriesJson['poster_path'],
+                          name: seriesJson['name']);
+      series?.addMovieToCollection(this);
+    }
+
+    // TODO: add to database
   }
 
   factory Movie.fromJson(Map<String, dynamic> jsonResp)
   {
-    List<ProductionCompany> prodCompanies = get_all_prod_comp(jsonResp["production_companies"]);
-    List<Genre> genresList = get_all_genres(jsonResp["genres"]);
-    Collection? seriesCollection;
-    if(jsonResp['series'])
-    {
-      seriesCollection = jsonResp['series'];
-    }
-
+    // Movie movie;
+    // if (db.findAllMovies(jsonResp['title'], movie))
+    // {
+    //   return movie;
+    // }
     return Movie(
       title: jsonResp['title'],
       backdropPath: jsonResp['backdrop_path'],
       synopsis: jsonResp['overview'],
       posterPath: jsonResp['poster_path'],
       releaseDate: jsonResp['release_date'],
-      productionCompanies: prodCompanies,
-      genres: genresList,
+      prodCompaniesJson: jsonResp["production_companies"],
+      genresJson: jsonResp["genres"],
       budget: jsonResp['budget'],
-      series: seriesCollection,
+      seriesJson: jsonResp['belongs_to_collection'],
       tmdbRating: jsonResp['rating'],
-      tmdbId: jsonResp['id']
-    );
+      tmdbId: jsonResp['id']);
   }
 
   List<Cast> getCastList(Movie movie)
@@ -91,18 +110,72 @@ class Movie
     print("Unable to get director for $title");
     return null;
   }
+
+  List<ProductionCompany> getAllProdComp(List<dynamic> jsonData)
+  {
+    List<ProductionCompany> producedBy = [];
+    for (var item in jsonData)
+    {
+      producedBy.add(ProductionCompany(name: item['name'],
+                                       logoPath: item['logo_path'],
+                                       id: item['id']
+      ));
+    }
+    return producedBy;
+  }
+
+  List<Genre> getAllGenres(List<dynamic> jsonData)
+  {
+    List<Genre> genres = [];
+    for (var item in jsonData)
+    {
+      genres.add(Genre(name: item['name'],
+                        id: item['id']
+      ));
+    }
+    return genres;
+  }
+
+  @override
+  bool operator ==(Object other)
+  {
+    return other is Movie && (title == other.title);
+  }
+
+  @override
+  int get hashCode => Object.hash(title, tmdbId);
 }
 
 class ProductionCompany
 {
   final String name;
   final String logoPath;
+  final int id;
+
+  ProductionCompany({
+    required this.name, 
+    required this.logoPath, 
+    required this.id});
 }
 
 class Genre
 {
   final String name;
   final int id;
+  List<Movie> movies = [];
+  final Database db = Database();
+  
+  Genre({
+    required this.name, 
+    required this.id})
+  {
+    // db.addToAllGenres(this);
+  }
+
+  addMovieToGenre(Movie movie)
+  {
+    movies.add(movie);
+  }
 }
 
 class Collection
@@ -111,5 +184,18 @@ class Collection
   final String name;
   final String posterPath;
   final String backdropPath;
-  final List<Movie> movies;
+  List<Movie> movies = [];
+
+  final Database db = Database();
+
+  Collection({
+    required this.id, 
+    required this.name, 
+    required this.posterPath, 
+    required this.backdropPath});
+
+  addMovieToCollection(Movie movie)
+  {
+    movies.add(movie);
+  }
 }
