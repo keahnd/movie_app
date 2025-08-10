@@ -45,4 +45,4 @@ app.*.map.json
 /android/app/release
 
 # Sensitive Information
-lib\services\tmdb_api\keys.dart
+lib/services/tmdb_api/keys.dart
