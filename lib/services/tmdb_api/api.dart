@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import "package:movie_app/services/tmdb_api/data.dart";
-import "package:movie_app/database_models/movies.dart";
+import 'package:movie_app/services/tmdb_api/data.dart';
+import 'package:movie_app/database_models/movies.dart';
+import 'package:movie_app/database_models/people.dart';
+import 'package:movie_app/database_models/utilities.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -18,9 +20,33 @@ class Api
       List<Movie> upcomingMovies = data.map((movie) => Movie.fromJson(movie)).toList();
       return upcomingMovies;
     }
-    else
+    throw Exception('Failed to get Upcoming Movies');
+  }
+
+  Future<List<dynamic>> getCrew(String movieId, CastCrew option) async
+  {
+    // only using english as a default param
+    // TODO: Allow changing the language param
+    final Map<String, String> queryParameters = {'language': 'en-US'};
+    final Uri uri = Uri.https(Endpoints.urlBase, movieId+Endpoints.urlCastCrew,  queryParameters);
+    final response = await http.get(uri,
+                                    headers: {'Authorization': accessToken});
+
+    if(response.statusCode == 200)
     {
-      throw Exception('Failed to get Upcoming Movies');
+      Map<String, dynamic> jsonData = json.decode(response.body) as Map<String, dynamic>;
+      if(jsonData['id'] == movieId)
+      {
+        if(option == CastCrew.cast)
+        {
+          return jsonData['cast'];
+        }
+        else if (option == CastCrew.crew)
+        {
+          return jsonData['crew'];
+        }
+      }
     }
+    throw Exception('Failed to get Cast and Crew from movie: $movieId');
   }
 }

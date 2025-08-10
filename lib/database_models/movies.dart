@@ -1,4 +1,7 @@
 import 'package:movie_app/database_models/people.dart';
+import 'package:movie_app/services/tmdb_api/api.dart';
+import 'package:movie_app/database_models/utilities.dart';
+import 'package:logging/logging.dart';
 
 class Movie
 {
@@ -10,24 +13,26 @@ class Movie
   final List<ProductionCompany> productionCompanies;
   final List<Genre> genres;
   final int budget;
+  String tmdbId;
   Collection? series;
   int? tmdbRating;
-  List<Cast> cast;
-  Crew director;
-  int score;
+  List<Cast> cast = [];
+  Crew? director;
+  int score = -1;
 
   Movie({required this.title, required this.backdropPath, required this.synopsis,
          required this.posterPath, required this. releaseDate, required this.productionCompanies,
-         required this.genres, required this.budget, this.series, this.tmdbRating})
+         required this.genres, required this.budget, required this.tmdbId, this.series, this.tmdbRating})
   {
-
+    cast = getCastList(this);
+    director = getDirector(this);
   }
 
   factory Movie.fromJson(Map<String, dynamic> jsonResp)
   {
     List<ProductionCompany> prodCompanies = get_all_prod_comp(jsonResp["production_companies"]);
     List<Genre> genresList = get_all_genres(jsonResp["genres"]);
-    Collection seriesCollection = null;
+    Collection? seriesCollection;
     if(jsonResp['series'])
     {
       seriesCollection = jsonResp['series'];
@@ -43,8 +48,48 @@ class Movie
       genres: genresList,
       budget: jsonResp['budget'],
       series: seriesCollection,
-      tmdbRating: jsonResp['rating']
+      tmdbRating: jsonResp['rating'],
+      tmdbId: jsonResp['id']
     );
+  }
+
+  List<Cast> getCastList(Movie movie)
+  {
+    List<Cast> castList = [];
+    Api().getCrew(tmdbId, CastCrew.cast).then((jsonResp)
+    {
+      for(var item in jsonResp)
+      {
+        castList.add(Cast(name: item['name'],
+                          character: item['character'],
+                          image: item['profile_path']
+        ));
+      }
+    });
+    // TODO: Implement logger
+    print("Unable to get director for $title");
+    return castList;
+  }
+
+  Crew? getDirector(Movie movie)
+  {
+    Api().getCrew(tmdbId, CastCrew.crew).then((jsonResp)
+    {
+      for(var item in jsonResp)
+      {
+        if (item['job'] == 'Director')
+        {
+          director = Crew(name: item['name'],
+                          role: item['job'],
+                          image: item['profile_path']
+          );
+          return director;
+        }
+      }
+    });
+    // TODO: Implement logger
+    print("Unable to get director for $title");
+    return null;
   }
 }
 

@@ -10,6 +10,7 @@ class Endpoints
   static const String urlUpcoming = 'upcoming';
   static const String urlAiringToday = 'airing_today';
   static const String urlOnTheAir = 'on_the_air';
+  static const String urlCastCrew = 'credits';
 }
 
 const apiKey = '66c229290afc8a7f30d853752b041a1b';
